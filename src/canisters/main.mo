@@ -1,5 +1,6 @@
 import Result "mo:base/Result";
 import HashMap "mo:base/HashMap";
+import Time "mo:base/Time";
 import Bool "mo:base/Bool";
 import Text "mo:base/Text";
 import Nat "mo:base/Nat";
@@ -12,6 +13,7 @@ actor {
         validatorId : Text;
         workerId : Text;
         prize : Nat;
+        deadline : Time.Time;
         valid : Bool;
     };
 
@@ -23,7 +25,7 @@ actor {
     var presentId : Nat = 0;
 
     // make a new task in makeTask public function
-    public shared func makeTask(companyId : Text, validatorId : Text, workerId : Text, prize : Nat) : async Result.Result<Text, Text> {
+    public shared func makeTask(companyId : Text, validatorId : Text, workerId : Text, prize : Nat, deadline : Time.Time) : async Result.Result<Text, Text> {
         if (companyId == "" or validatorId == "" or workerId == "") {
             return #err("ID cannot be empty");
         };
@@ -39,6 +41,7 @@ actor {
             validatorId = validatorId;
             workerId = workerId;
             prize = prize;
+            deadline = deadline;
             valid = false;
         };
 
