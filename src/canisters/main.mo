@@ -1,0 +1,49 @@
+import Result "mo:base/Result";
+import HashMap "mo:base/HashMap";
+import Bool "mo:base/Bool";
+import Text "mo:base/Text";
+import Nat "mo:base/Nat";
+
+actor {
+    // Task Object
+    type Task = {
+        id : Nat;
+        companyId : Text;
+        validatorId : Text;
+        workerId : Text;
+        prize : Nat;
+        valid : Bool;
+    };
+
+    // HashMap for all the tasks
+    let tasks = HashMap.HashMap<Text, Task>(0, Text.equal, Text.hash);
+    // admin ID
+    let adminId: Text = "a7db5377686c7a0a34b2c99ccdbf3b727794f3341b88182f79ed287ccfec38bd";
+    // ID for a task
+    var presentId : Nat = 0;
+
+    // make a new task in makeTask public function
+    public shared func makeTask(companyId : Text, validatorId : Text, workerId : Text, prize : Nat) : async Result.Result<Text, Text> {
+        if (companyId == "" or validatorId == "" or workerId == "") {
+            return #err("ID cannot be empty");
+        };
+        if (prize == 0) {
+            return #err("Prize cannot be 0");
+        };
+
+        presentId += 1;
+        // make a new task
+        let task : Task = {
+            id = presentId;
+            companyId = companyId;
+            validatorId = validatorId;
+            workerId = workerId;
+            prize = prize;
+            valid = false;
+        };
+
+        // put the new task in tasks HashMap
+        tasks.put(Nat.toText(presentId), task);
+        return #ok("success");
+    };
+}

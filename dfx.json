@@ -1,18 +1,13 @@
 {
   "canisters": {
-    "label_backend": {
-      "main": "src/label_backend/main.mo",
+    "main_canister": {
+      "main": "src/canisters/main.mo",
       "type": "motoko"
     },
     "label_frontend": {
-      "dependencies": [
-        "label_backend"
-      ],
-      "source": [
-        "src/label_frontend/dist"
-      ],
-      "type": "assets",
-      "workspace": "label_frontend"
+      "dependencies": ["main_canister"],
+      "source": ["src/label_frontend/dist"],
+      "type": "assets"
     }
   },
   "defaults": {
