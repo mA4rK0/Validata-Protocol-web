@@ -1,0 +1,137 @@
+import React from 'react';
+import { Database, Shield, Zap, ArrowRight } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
+
+export const LoginPage: React.FC = () => {
+  const { login, authState } = useAuth();
+
+  const features = [
+    {
+      icon: Database,
+      title: 'Decentralized Data Labeling',
+      description: 'Secure, transparent data processing on the Internet Computer',
+    },
+    {
+      icon: Shield,
+      title: 'Cryptographic Verification',
+      description: 'Every label is verified and stored immutably on-chain',
+    },
+    {
+      icon: Zap,
+      title: 'Instant ICP Rewards',
+      description: 'Get paid instantly in ICP tokens for quality contributions',
+    },
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#0A0E2A] via-[#0A0E2A] to-[#1a1f4a] flex items-center justify-center p-4">
+      <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        {/* Left Side - Branding */}
+        <div className="text-white space-y-8">
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 bg-[#00FFB2] rounded-2xl flex items-center justify-center">
+              <Database className="w-7 h-7 text-[#0A0E2A]" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold" style={{ fontFamily: 'Sora, sans-serif' }}>
+                Validata
+              </h1>
+              <p className="text-[#00FFB2] text-sm">Web3 AI Data Platform</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h2 className="text-4xl font-bold leading-tight" style={{ fontFamily: 'Sora, sans-serif' }}>
+              The Future of
+              <br />
+              <span className="text-[#00FFB2]">AI Data Labeling</span>
+            </h2>
+            <p className="text-gray-300 text-lg leading-relaxed">
+              Join the decentralized revolution in AI training data. Earn ICP tokens while contributing 
+              to the next generation of blockchain and AI technologies.
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            {features.map((feature, index) => {
+              const Icon = feature.icon;
+              return (
+                <div key={index} className="flex items-start space-x-4">
+                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Icon className="w-5 h-5 text-[#00FFB2]" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-white mb-1">{feature.title}</h3>
+                    <p className="text-gray-400 text-sm">{feature.description}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Right Side - Login */}
+        <div className="bg-white rounded-3xl p-8 shadow-2xl">
+          <div className="text-center mb-8">
+            <h3 className="text-2xl font-bold text-[#0A0E2A] mb-2" style={{ fontFamily: 'Sora, sans-serif' }}>
+              Welcome to Validata
+            </h3>
+            <p className="text-gray-600">
+              Connect with Internet Identity to get started
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            <div className="bg-gradient-to-r from-[#00FFB2]/10 to-[#9B5DE5]/10 p-6 rounded-2xl border border-[#00FFB2]/20">
+              <div className="flex items-center space-x-3 mb-3">
+                <Shield className="w-6 h-6 text-[#00FFB2]" />
+                <span className="font-semibold text-[#0A0E2A]">Secure Authentication</span>
+              </div>
+              <p className="text-sm text-gray-600">
+                Internet Identity provides secure, anonymous authentication without passwords or personal data.
+              </p>
+            </div>
+
+            <button
+              onClick={login}
+              disabled={authState.isLoading}
+              className="w-full bg-[#00FFB2] text-[#0A0E2A] py-4 rounded-2xl font-semibold text-lg hover:bg-[#00FFB2]/90 transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {authState.isLoading ? (
+                <div className="w-6 h-6 border-2 border-[#0A0E2A]/30 border-t-[#0A0E2A] rounded-full animate-spin" />
+              ) : (
+                <>
+                  <span>Connect with Internet Identity</span>
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
+            </button>
+
+            <div className="text-center">
+              <p className="text-xs text-gray-500">
+                By connecting, you agree to our Terms of Service and Privacy Policy
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-8 pt-6 border-t border-gray-100">
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <div className="text-2xl font-bold text-[#00FFB2]">1,247</div>
+                <div className="text-xs text-gray-500">Active Labelers</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-[#9B5DE5]">45,230</div>
+                <div className="text-xs text-gray-500">Labels Created</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-[#0A0E2A]">892.4</div>
+                <div className="text-xs text-gray-500">ICP Distributed</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
