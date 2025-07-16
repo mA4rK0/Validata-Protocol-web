@@ -24,9 +24,9 @@ actor {
     // ID for a task
     var presentId : Nat = 0;
 
-    // make a new task in makeTask public function
-    public shared func makeTask(companyId : Text, validatorId : Text, workerId : Text, prize : Nat, deadline : Time.Time) : async Result.Result<Text, Text> {
-        if (companyId == "" or validatorId == "" or workerId == "") {
+    // make a new task on makeTask public function
+    public shared func makeTask(companyId : Text, validatorId : Text, prize : Nat, deadline : Time.Time) : async Result.Result<Text, Text> {
+        if (companyId == "" or validatorId == "") {
             return #err("ID cannot be empty");
         };
         if (prize == 0) {
@@ -39,7 +39,7 @@ actor {
             id = presentId;
             companyId = companyId;
             validatorId = validatorId;
-            workerId = workerId;
+            workerId = "";
             prize = prize;
             deadline = deadline;
             valid = false;
@@ -48,5 +48,31 @@ actor {
         // put the new task in tasks HashMap
         tasks.put(Nat.toText(presentId), task);
         return #ok("success");
+    };
+
+    // Take a task on takeTask function 
+    public shared func takeTask(worker : Text, taskId : Text) : async Result.Result<Text, Text> {
+        // get a task from the HashMap
+        let existingTask = tasks.get(taskId);
+        switch(existingTask) {
+            case null {
+                return #err("Task not found");
+            };
+            case(?task) { 
+                let updatedTask : Task = {
+                    id = task.id;
+                    companyId = task.companyId;
+                    validatorId = task.validatorId;
+                    workerId = worker;
+                    prize = task.prize;
+                    deadline = task.deadline;
+                    valid = task.valid;
+                };
+
+                // update the existing task in HashMap
+                tasks.put(taskId, updatedTask);
+                return #ok("Task updated");
+            };
+        };
     };
 }
