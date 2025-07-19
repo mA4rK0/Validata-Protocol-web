@@ -57,12 +57,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, title, subtitle }) => 
 
               {/* User Menu */}
               <div className="relative">
-                <button className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-xl transition-colors">
+                <div className="flex items-center space-x-2 bg-gray-100 px-3 py-2 rounded-xl">
                   <User className="w-4 h-4 text-gray-600" />
                   <span className="text-sm font-medium text-gray-700 capitalize">
                     {authState.user?.role}
                   </span>
-                </button>
+                </div>
               </div>
 
               <button

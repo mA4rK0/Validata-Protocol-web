@@ -1,7 +1,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './components/AuthProvider';
+import { RequireRole } from './components/RequireRole';
 import { useAuth } from './hooks/useAuth';
+import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { RoleSelection } from './components/RoleSelection';
 import { ClientDashboard } from './pages/ClientDashboard';
@@ -23,11 +25,25 @@ const AppContent: React.FC = () => {
   }
 
   if (!authState.isAuthenticated) {
-    return <LoginPage />;
+    return (
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/select-role" element={<RoleSelection />} />
+        <Route path="/login/:role" element={<LoginPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    );
   }
 
   if (!authState.user?.role) {
-    return <RoleSelection />;
+    return (
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/select-role" element={<RoleSelection />} />
+        <Route path="/login/:role" element={<LoginPage />} />
+        <Route path="*" element={<RoleSelection />} />
+      </Routes>
+    );
   }
 
   return (
@@ -35,16 +51,29 @@ const AppContent: React.FC = () => {
       <Route path="/" element={<Navigate to={`/dashboard/${authState.user.role}`} replace />} />
       <Route 
         path="/dashboard/client" 
-        element={authState.user.role === 'client' ? <ClientDashboard /> : <Navigate to={`/dashboard/${authState.user.role}`} replace />} 
+        element={
+          <RequireRole allowed={['client']}>
+            <ClientDashboard />
+          </RequireRole>
+        } 
       />
       <Route 
         path="/dashboard/labeler" 
-        element={authState.user.role === 'labeler' ? <LabelerDashboard /> : <Navigate to={`/dashboard/${authState.user.role}`} replace />} 
+        element={
+          <RequireRole allowed={['labeler']}>
+            <LabelerDashboard />
+          </RequireRole>
+        } 
       />
       <Route 
         path="/dashboard/admin" 
-        element={authState.user.role === 'admin' ? <AdminDashboard /> : <Navigate to={`/dashboard/${authState.user.role}`} replace />} 
+        element={
+          <RequireRole allowed={['admin']}>
+            <AdminDashboard />
+          </RequireRole>
+        } 
       />
+      <Route path="/select-role" element={<RoleSelection />} />
       <Route path="*" element={<Navigate to={`/dashboard/${authState.user.role}`} replace />} />
     </Routes>
   );

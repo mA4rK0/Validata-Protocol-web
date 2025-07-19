@@ -1,9 +1,49 @@
 import React from 'react';
-import { Database, Shield, Zap, ArrowRight } from 'lucide-react';
+import { Database, Shield, Zap, ArrowRight, Target } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useParams, Navigate } from 'react-router-dom';
 
 export const LoginPage: React.FC = () => {
   const { login, authState } = useAuth();
+  const { role } = useParams<{ role: 'client' | 'labeler' | 'admin' }>();
+
+  // Redirect if already authenticated and has role
+  if (authState.isAuthenticated && authState.user?.role) {
+    return <Navigate to={`/dashboard/${authState.user.role}`} replace />;
+  }
+
+  const handleLogin = async () => {
+    await login(role);
+  };
+
+  const getRoleInfo = () => {
+    switch (role) {
+      case 'client':
+        return {
+          title: 'Client Portal',
+          subtitle: 'Upload datasets and manage labeling tasks',
+          icon: Database,
+          color: 'text-[#00FFB2]',
+        };
+      case 'labeler':
+        return {
+          title: 'Labeler Portal',
+          subtitle: 'Earn rewards by labeling data',
+          icon: Target,
+          color: 'text-[#9B5DE5]',
+        };
+      case 'admin':
+        return {
+          title: 'Admin Portal',
+          subtitle: 'Manage platform operations',
+          icon: Shield,
+          color: 'text-orange-500',
+        };
+    }
+  };
+
+  const roleInfo = getRoleInfo();
+  const RoleIcon = roleInfo.icon;
 
   const features = [
     {
@@ -42,14 +82,30 @@ export const LoginPage: React.FC = () => {
 
           <div className="space-y-4">
             <h2 className="text-4xl font-bold leading-tight" style={{ fontFamily: 'Sora, sans-serif' }}>
-              The Future of
-              <br />
-              <span className="text-[#00FFB2]">AI Data Labeling</span>
+              {role ? (
+                <>
+                  Welcome to
+                  <br />
+                  <span className={roleInfo.color}>{roleInfo.title}</span>
+                </>
+              ) : (
+                <>
+                  The Future of
+                  <br />
+                  <span className="text-[#00FFB2]">AI Data Labeling</span>
+                </>
+              )}
             </h2>
-            <p className="text-gray-300 text-lg leading-relaxed">
-              Join the decentralized revolution in AI training data. Earn ICP tokens while contributing 
-              to the next generation of blockchain and AI technologies.
-            </p>
+            {role ? (
+              <p className="text-gray-300 text-lg leading-relaxed">
+                {roleInfo.subtitle}. Connect with Internet Identity to access your dashboard.
+              </p>
+            ) : (
+              <p className="text-gray-300 text-lg leading-relaxed">
+                Join the decentralized revolution in AI training data. Earn ICP tokens while contributing 
+                to the next generation of blockchain and AI technologies.
+              </p>
+            )}
           </div>
 
           <div className="space-y-6">
@@ -72,9 +128,21 @@ export const LoginPage: React.FC = () => {
 
         {/* Right Side - Login */}
         <div className="bg-white rounded-3xl p-8 shadow-2xl">
+          {role && (
+            <div className="text-center mb-6">
+              <div className={`w-16 h-16 bg-gradient-to-r from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-4`}>
+                <RoleIcon className={`w-8 h-8 ${roleInfo.color}`} />
+              </div>
+              <h3 className="text-xl font-bold text-[#0A0E2A]" style={{ fontFamily: 'Sora, sans-serif' }}>
+                {roleInfo.title}
+              </h3>
+              <p className="text-gray-600 text-sm">{roleInfo.subtitle}</p>
+            </div>
+          )}
+
           <div className="text-center mb-8">
             <h3 className="text-2xl font-bold text-[#0A0E2A] mb-2" style={{ fontFamily: 'Sora, sans-serif' }}>
-              Welcome to Validata
+              {role ? `Login as ${role.charAt(0).toUpperCase() + role.slice(1)}` : 'Welcome to Validata'}
             </h3>
             <p className="text-gray-600">
               Connect with Internet Identity to get started
@@ -93,7 +161,7 @@ export const LoginPage: React.FC = () => {
             </div>
 
             <button
-              onClick={login}
+              onClick={handleLogin}
               disabled={authState.isLoading}
               className="w-full bg-[#00FFB2] text-[#0A0E2A] py-4 rounded-2xl font-semibold text-lg hover:bg-[#00FFB2]/90 transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >

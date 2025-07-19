@@ -1,6 +1,6 @@
 export interface User {
   principal: string;
-  role: 'client' | 'labeler' | 'admin';
+  role?: 'client' | 'labeler' | 'admin';
   profile?: {
     username?: string;
     email?: string;
@@ -13,4 +13,5 @@ export interface AuthState {
   isAuthenticated: boolean;
   user: User | null;
   isLoading: boolean;
+  error?: string;
 }

@@ -49,7 +49,7 @@ export const useAuthState = () => {
           isAuthenticated: true,
           user: {
             principal,
-            role: userRole || 'client', // Default to client if no role found
+            role: userRole || undefined,
             profile: {
               username: `user_${principal.slice(0, 8)}`,
               reputation: 4.8,
@@ -71,11 +71,12 @@ export const useAuthState = () => {
         isAuthenticated: false,
         user: null,
         isLoading: false,
+        error: 'Failed to initialize authentication',
       });
     }
   };
 
-  const login = async () => {
+  const login = async (role?: 'client' | 'labeler' | 'admin') => {
     if (!authClient) return;
 
     try {
@@ -87,14 +88,17 @@ export const useAuthState = () => {
           const identity = authClient.getIdentity();
           const principal = identity.getPrincipal().toString();
           
-          // Check if user has a role
-          const userRole = await fetchUserRole(principal);
+          // If role is provided, set it immediately
+          let userRole = role;
+          if (!userRole) {
+            userRole = await fetchUserRole(principal);
+          }
           
           setAuthState({
             isAuthenticated: true,
             user: {
               principal,
-              role: userRole || 'client',
+              role: userRole || undefined,
               profile: {
                 username: `user_${principal.slice(0, 8)}`,
                 reputation: 4.8,
@@ -103,6 +107,11 @@ export const useAuthState = () => {
             },
             isLoading: false,
           });
+          
+          // Save role if provided
+          if (role) {
+            await saveUserRole(principal, role);
+          }
         },
         onError: (error) => {
           console.error('Login failed:', error);
@@ -110,6 +119,7 @@ export const useAuthState = () => {
             isAuthenticated: false,
             user: null,
             isLoading: false,
+            error: 'Login failed',
           });
         },
       });
@@ -119,6 +129,7 @@ export const useAuthState = () => {
         isAuthenticated: false,
         user: null,
         isLoading: false,
+        error: 'Login failed',
       });
     }
   };
@@ -139,7 +150,7 @@ export const useAuthState = () => {
   };
 
   const setUserRole = async (role: 'client' | 'labeler' | 'admin') => {
-    if (!authState.user) return;
+    if (!authState.isAuthenticated || !authState.user) return;
 
     try {
       // Simulate saving role to backend
