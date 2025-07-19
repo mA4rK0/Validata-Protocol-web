@@ -261,7 +261,7 @@ export const ClientDashboard: React.FC = () => {
                     className="pl-10 pr-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00FFB2] focus:border-transparent text-sm"
                   />
                 </div>
-                <button className="flex items-center px-3 py-2 border border-gray-300 rounded-xl hover:bg-gray-50 text-sm">
+                <button className="flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 text-sm text-gray-700 dark:text-gray-300">
                   <Filter className="w-4 h-4 mr-2" />
                   Filter
                 </button>
