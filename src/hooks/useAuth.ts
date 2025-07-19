@@ -5,7 +5,7 @@ import { User, AuthState } from '../types/auth';
 
 const AuthContext = createContext<{
   authState: AuthState;
-  login: () => Promise<void>;
+  login: (role?: 'client' | 'labeler' | 'admin') => Promise<void>;
   logout: () => Promise<void>;
   setUserRole: (role: 'client' | 'labeler' | 'admin') => Promise<void>;
 } | null>(null);

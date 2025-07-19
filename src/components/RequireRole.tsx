@@ -12,10 +12,10 @@ export const RequireRole: React.FC<RequireRoleProps> = ({ children, allowed }) =
 
   if (authState.isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0A0E2A] via-[#0A0E2A] to-[#1a1f4a] flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gradient-to-br dark:from-[#0A0E2A] dark:via-[#0A0E2A] dark:to-[#1a1f4a] flex items-center justify-center transition-colors duration-300">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-[#00FFB2]/30 border-t-[#00FFB2] rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-white text-lg">Loading...</p>
+          <p className="text-[#0A0E2A] dark:text-white text-lg">Loading...</p>
         </div>
       </div>
     );
