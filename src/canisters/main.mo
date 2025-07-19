@@ -6,7 +6,7 @@ import Text "mo:base/Text";
 import Nat "mo:base/Nat";
 import Principal "mo:base/Principal";
 
-actor {
+actor class TaskManager() {
     // Task Object
     type Task = {
         id : Nat;
@@ -33,7 +33,7 @@ actor {
     };
 
     // Use Principal for security
-    let adminId : Principal = Principal.fromText("a7db5377686c7a0a34b2c99ccdbf3b727794f3341b88182f79ed287ccfec38bd");
+    let adminPrincipal : Principal = Principal.fromText("un4fu-tqaaa-aaaab-qadjq-cai");
     
     var userProfiles = HashMap.HashMap<Text, UserProfile>(0, Text.equal, Text.hash);
     let tasks = HashMap.HashMap<Text, Task>(0, Text.equal, Text.hash);
@@ -177,13 +177,13 @@ actor {
                 userProfiles.put(task.validatorId, updatedValidator);
                 
                 // Admin share
-                let adminProfile = get_or_create_profile(Principal.toText(adminId));
+                let adminProfile = get_or_create_profile(Principal.toText(adminPrincipal));
                 let adminShare = total - (share * 2);
                 let updatedAdmin = {
                     adminProfile with 
                     balance = adminProfile.balance + adminShare
                 };
-                userProfiles.put(Principal.toText(adminId), updatedAdmin);
+                userProfiles.put(Principal.toText(adminPrincipal), updatedAdmin);
                 
                 let claimedTask = { task with claimed = true };
                 tasks.put(taskId, claimedTask);
