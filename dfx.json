@@ -1,12 +1,12 @@
 {
   "canisters": {
     "main_canister": {
-      "main": "src/canisters/main.mo",
+      "main": "backEnd/src/canisters/main.mo",
       "type": "motoko"
     },
-    "label_frontend": {
+    "frontend": {
       "dependencies": ["main_canister"],
-      "source": ["src/label_frontend/dist"],
+      "source": ["frontEnd/src/dist"],
       "type": "assets"
     }
   },

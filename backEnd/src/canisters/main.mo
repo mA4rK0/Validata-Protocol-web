@@ -1,7 +1,10 @@
 import Result "mo:base/Result";
+import Iter "mo:base/Iter";
+import Array "mo:base/Array";
 import HashMap "mo:base/HashMap";
 import Time "mo:base/Time";
 import Bool "mo:base/Bool";
+import Float "mo:base/Float";
 import Text "mo:base/Text";
 import Nat "mo:base/Nat";
 import Principal "mo:base/Principal";
@@ -10,13 +13,22 @@ actor class TaskManager() {
     // Task Object
     type Task = {
         id : Nat;
+        name : Text;
+        taskType: Text;
+        description: Text;
+        createdAt: Int; 
         companyId : Text;
         validatorId : Text;
-        workerId : Text;
+        workerIds : [Text]; 
+        rewardPerLabel : Nat; 
+        totalItems : Nat; 
         prize : Nat;
-        deadline : Time.Time;
+        completedItems : Nat;
         valid : Bool;
+        progress : Int;
         claimed : Bool;
+        labelerCount: Nat;
+        avgAccuracy: Float;
     };
 
     public type UserRole = {
@@ -31,9 +43,6 @@ actor class TaskManager() {
         tasksCompleted : Nat;
         role : UserRole;
     };
-
-    // Use Principal for security
-    let adminPrincipal : Principal = Principal.fromText("un4fu-tqaaa-aaaab-qadjq-cai");
     
     var userProfiles = HashMap.HashMap<Text, UserProfile>(0, Text.equal, Text.hash);
     let tasks = HashMap.HashMap<Text, Task>(0, Text.equal, Text.hash);
@@ -52,48 +61,118 @@ actor class TaskManager() {
                 userProfiles.put(userId, newProfile);
                 newProfile
             };
+        };
+    };
+
+    public query func getCompanyTasks(companyId: Text) : async [Task] {
+        let allTasks = tasks.entries();
+
+        let companyTasks = Iter.filter(
+            allTasks, 
+            func ((id, task) : (Text, Task)) : Bool {
+                task.companyId == companyId
+            }
+        );
+
+        let tasksOnly = Iter.map(
+            companyTasks,
+            func ((id, task) : (Text, Task)) : Task { task }
+        );
+
+        Iter.toArray(tasksOnly);
+    };
+
+    public shared({caller}) func updateProgress(taskId: Text, completedItems: Nat) : async Result.Result<(), Text> {
+        switch (tasks.get(taskId)) {
+            case null { 
+                return #err("Task not found"); 
+            };
+            case (?task) {
+                let workerId = Principal.toText(caller);
+            
+                if (Array.find(task.workerIds, func (id : Text) : Bool { id == workerId }) != null) { () } else {
+                    return #err("Unauthorized: Only assigned workers can update progress");
+                };
+
+                if (completedItems > task.totalItems) {
+                    return #err("Completed items cannot exceed total items");
+                };
+
+                let updatedTask = {
+                    task with
+                    completedItems = completedItems;
+                    progress = if (task.totalItems > 0) {
+                        (completedItems * 100) / task.totalItems;
+                    } else {
+                        0;
+                    };
+                };
+
+                tasks.put(taskId, updatedTask);
+                #ok(())
+            }
         }
     };
 
-    public shared({caller}) func makeTask(validatorId : Text, prize : Nat, deadline : Time.Time) : async Result.Result<Text, Text> {
+    public shared({caller}) func makeTask(validatorId: Text, name: Text, taskType: Text, description: Text, totalItems: Nat, rewardPerLabel: Nat) : async Result.Result<Text, Text> {
         let companyId = Principal.toText(caller);
         
         if (validatorId == "") {
             return #err("Validator ID required");
         };
-        
-        if (prize <= 0) {
-            return #err("Prize must be positive");
+        if (name == "") {
+            return #err("Task name required");
         };
+        if (totalItems == 0) {
+            return #err("Total items must be greater than 0");
+        };
+        if (rewardPerLabel == 0) {
+            return #err("Reward per label must be positive");
+        };
+
+        let prize = totalItems * rewardPerLabel;
 
         let companyProfile = get_or_create_profile(companyId);
         if (companyProfile.balance < prize) {
             return #err("Insufficient company balance");
-        } else if (companyProfile.balance >= prize) {
-            let updatedCompany = {
-                companyProfile with 
-                balance = companyProfile.balance - prize;
-            };
-            userProfiles.put(companyId, updatedCompany);
-        } else {
-            // handle the case where the balance is insufficient
+        };
+
+        let updatedBalance = companyProfile.balance - prize;
+        if (updatedBalance < 0) {
             return #err("Insufficient company balance");
         };
+        let updatedCompany = {
+            companyProfile with 
+            balance = updatedBalance;
+        };
+        userProfiles.put(companyId, updatedCompany);
 
         presentId += 1;
+        let taskId = Nat.toText(presentId);
+        
         let task : Task = {
             id = presentId;
+            name = name;
+            taskType = taskType;
+            description = description;
+            createdAt = Time.now();
             companyId = companyId;
             validatorId = validatorId;
-            workerId = "";
+            workerIds = [];
+            rewardPerLabel = rewardPerLabel;
+            totalItems = totalItems;
             prize = prize;
-            deadline = deadline;
+            completedItems = 0;
             valid = false;
+            progress = 0;
             claimed = false;
+            labelerCount = 0;
+            avgAccuracy = 0.0;
         };
 
-        tasks.put(Nat.toText(presentId), task);
-        #ok("Task created: " # Nat.toText(presentId))
+        tasks.put(taskId, task);
+        
+        #ok("Task created: " # taskId)
     };
 
     public shared({caller}) func takeTask(taskId : Text) : async Result.Result<Text, Text> {
@@ -102,7 +181,7 @@ actor class TaskManager() {
         switch (tasks.get(taskId)) {
             case null { #err("Task not found") };
             case (?task) {
-                if (task.workerId != "") {
+                if (Array.find(task.workerIds, func (id : Text) : Bool { id == workerId }) != null) {
                     return #err("Task already taken");
                 };
                 
@@ -125,7 +204,7 @@ actor class TaskManager() {
                 if (task.validatorId != validatorId) {
                     return #err("Unauthorized validator");
                 };
-                if (task.workerId == "") {
+                if (task.workerIds.size() == 0) {
                     return #err("No worker assigned");
                 };
                 if (task.valid) {
@@ -139,56 +218,57 @@ actor class TaskManager() {
         }
     };
 
-    public shared({caller}) func claimReward(taskId : Text) : async Result.Result<Text, Text> {
-        let claimer = Principal.toText(caller);
-        
+    public shared({caller}) func claimPartialReward(taskId: Text, itemsCompleted: Nat) : async Result.Result<Text, Text> {
+        let workerId = Principal.toText(caller);
+
         switch (tasks.get(taskId)) {
-            case null { #err("Task not found") };
+            case null { 
+                return #err("Task not found"); 
+            };
             case (?task) {
-                if (not task.valid) {
-                    return #err("Task not validated");
-                };
-                if (task.claimed) {
-                    return #err("Reward already claimed");
-                };
-                if (task.workerId != claimer) {
-                    return #err("Unauthorized claim");
+                if (Array.find(task.workerIds, func (id : Text) : Bool { id == workerId }) == null) {
+                    return #err("Unauthorized: Only assigned workers can claim rewards");
                 };
 
-                // Calculate the reward share
-                let total = task.prize;
-                let share = total / 3;
+                if (itemsCompleted == 0) {
+                    return #err("Must complete at least 1 item");
+                };
                 
-                // Worker share
-                let workerProfile = get_or_create_profile(task.workerId);
+                let claimableItems = Nat.min(itemsCompleted, task.totalItems - task.completedItems);
+                if (claimableItems == 0) {
+                    return #err("No items available to claim");
+                };
+                
+                let rewardAmount = claimableItems * task.rewardPerLabel;
+                
+                if (task.prize < rewardAmount) {
+                    return #err("Insufficient funds in task escrow");
+                };
+                
+                let workerProfile = get_or_create_profile(workerId);
                 let updatedWorker = {
                     workerProfile with 
-                    balance = workerProfile.balance + share;
-                    tasksCompleted = workerProfile.tasksCompleted + 1
+                    balance = workerProfile.balance + rewardAmount;
+                    tasksCompleted = workerProfile.tasksCompleted + claimableItems;
                 };
-                userProfiles.put(task.workerId, updatedWorker);
+                userProfiles.put(workerId, updatedWorker);
                 
-                // Validator share
-                let validatorProfile = get_or_create_profile(task.validatorId);
-                let updatedValidator = {
-                    validatorProfile with 
-                    balance = validatorProfile.balance + share
+                let newCompletedItems = task.completedItems + claimableItems;
+                let newProgress = if (task.totalItems > 0) {
+                    (newCompletedItems * 100) / task.totalItems
+                } else { 0 };
+                
+                let updatedTask = {
+                    task with
+                    completedItems = newCompletedItems;
+                    progress = newProgress;
+                    prize = task.prize - rewardAmount;
                 };
-                userProfiles.put(task.validatorId, updatedValidator);
                 
-                // Admin share
-                let adminProfile = get_or_create_profile(Principal.toText(adminPrincipal));
-                let adminShare = total - (share * 2);
-                let updatedAdmin = {
-                    adminProfile with 
-                    balance = adminProfile.balance + adminShare
-                };
-                userProfiles.put(Principal.toText(adminPrincipal), updatedAdmin);
+                tasks.put(taskId, updatedTask);
                 
-                let claimedTask = { task with claimed = true };
-                tasks.put(taskId, claimedTask);
-                
-                #ok("Reward claimed. Received: " # Nat.toText(share))
+                let rewardICP = Float.toText(Float.fromInt(rewardAmount) / 100_000_000.0) # " ICP";
+                #ok("Claimed reward for " # Nat.toText(claimableItems) # " items: " # rewardICP)
             }
         }
     };

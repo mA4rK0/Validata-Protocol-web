@@ -13,6 +13,6 @@
   },
   "type": "module",
   "workspaces": [
-    "src/label_frontend"
+    "frontEnd/src/*"
   ]
 }
