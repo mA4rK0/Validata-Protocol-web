@@ -127,6 +127,10 @@ export const ClientDashboard: React.FC = () => {
       },
     };
 
+    // TODO: Call API to create task
+    const sendTaskData = (data: typeof taskData) => {};
+    sendTaskData(taskData);
+
     console.log("Task created:", taskData);
     console.log("Dataset:", selectedFile.name);
     console.log("Creator principal:", authState.user.principal);

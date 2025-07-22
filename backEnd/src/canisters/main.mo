@@ -17,6 +17,7 @@ actor class TaskManager() {
         name : Text;
         taskType: Text;
         description: Text;
+        qualityThreshold: Text;
         createdAt: Int; 
         companyId : Text;
         validatorId : Text;
@@ -30,12 +31,13 @@ actor class TaskManager() {
         claimed : Bool;
         labelerCount: Nat;
         avgAccuracy: Float;
+        dataset: [Nat8];
     };
 
     public type UserRole = {
-        #Admin;
-        #User;
+        #Client;
         #Labeler;
+        #Admin;
     };
 
     public type UserProfile = {
@@ -57,7 +59,7 @@ actor class TaskManager() {
                     id = userId;
                     balance = 0;
                     tasksCompleted = 0;
-                    role = #User;
+                    role = #Client;
                 };
                 userProfiles.put(userId, newProfile);
                 newProfile
@@ -118,7 +120,7 @@ actor class TaskManager() {
         }
     };
 
-    public shared({caller}) func makeTask(validatorId: Text, name: Text, taskType: Text, description: Text, totalItems: Nat, rewardPerLabel: Nat) : async Result.Result<Text, Text> {
+    public shared({caller}) func makeTask(validatorId: Text, name: Text, taskType: Text, description: Text, qualityThreshold: Text, totalItems: Nat, rewardPerLabel: Nat, dataset: [Nat8]) : async Result.Result<Text, Text> {
         let companyId = Principal.toText(caller);
         
         if (validatorId == "") {
@@ -132,6 +134,12 @@ actor class TaskManager() {
         };
         if (rewardPerLabel == 0) {
             return #err("Reward per label must be positive");
+        };
+        if (qualityThreshold == "") {
+            return #err("Quality threshold required");
+        };
+        if (dataset.size() == 0) {
+            return #err("Dataset required");
         };
 
         let prize = totalItems * rewardPerLabel;
@@ -160,6 +168,7 @@ actor class TaskManager() {
             name = name;
             taskType = taskType;
             description = description;
+            qualityThreshold = qualityThreshold;
             createdAt = Time.now();
             companyId = companyId;
             validatorId = validatorId;
@@ -173,6 +182,7 @@ actor class TaskManager() {
             claimed = false;
             labelerCount = 0;
             avgAccuracy = 0.0;
+            dataset = dataset;
         };
 
         tasks.put(taskId, task);

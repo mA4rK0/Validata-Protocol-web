@@ -6,7 +6,7 @@
     },
     "frontend": {
       "dependencies": ["main_canister"],
-      "source": ["frontEnd/src/dist"],
+      "source": ["frontEnd/dist"],
       "type": "assets"
     }
   },
