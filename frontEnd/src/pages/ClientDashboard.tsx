@@ -2,8 +2,10 @@ import React, { useState, useRef } from "react";
 import { Upload, Plus, Download, Clock, CheckCircle, X, AlertCircle, Copy, Eye, Filter, Search } from "lucide-react";
 import Papa from "papaparse";
 import { Layout } from "../components/Layout";
+import { useAuth } from "../hooks/useAuth";
 
 export const ClientDashboard: React.FC = () => {
+  const { authState } = useAuth();
   const [activeSection, setActiveSection] = useState<"overview" | "upload" | "tasks" | "history">("overview");
 
   const stats = [
@@ -85,6 +87,16 @@ export const ClientDashboard: React.FC = () => {
   const handleCreateTask = (e: React.MouseEvent) => {
     e.preventDefault();
 
+    if (!authState.isAuthenticated || !authState.user) {
+      alert("Please login first");
+      return;
+    }
+
+    if (authState.user.role !== "client") {
+      alert("Only clients can create labeling tasks");
+      return;
+    }
+
     if (!formData.taskName.trim()) {
       alert("Task Name is required");
       return;
@@ -106,6 +118,8 @@ export const ClientDashboard: React.FC = () => {
       rewardPerLabel: parseFloat(formData.rewardPerLabel) || 0,
       qualityThreshold: formData.qualityThreshold,
       labelingInstructions: formData.labelingInstructions,
+      creatorPrincipal: authState.user.principal,
+      creatorRole: authState.user.role,
       dataset: {
         name: selectedFile.name,
         size: selectedFile.size,
@@ -115,6 +129,7 @@ export const ClientDashboard: React.FC = () => {
 
     console.log("Task created:", taskData);
     console.log("Dataset:", selectedFile.name);
+    console.log("Creator principal:", authState.user.principal);
     alert("Task created successfully!");
 
     setFormData({
