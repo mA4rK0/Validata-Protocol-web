@@ -8,6 +8,7 @@ import Float "mo:base/Float";
 import Text "mo:base/Text";
 import Nat "mo:base/Nat";
 import Principal "mo:base/Principal";
+import Int "mo:base/Int";
 
 actor class TaskManager() {
     // Task Object
@@ -98,14 +99,17 @@ actor class TaskManager() {
                     return #err("Completed items cannot exceed total items");
                 };
 
+                let progressValue : Int = if (task.totalItems > 0) {
+                    let percent = (completedItems * 100) / task.totalItems;
+                    percent;
+                } else {
+                    0
+                };
+
                 let updatedTask = {
                     task with
                     completedItems = completedItems;
-                    progress = if (task.totalItems > 0) {
-                        (completedItems * 100) / task.totalItems;
-                    } else {
-                        0;
-                    };
+                    progress = progressValue;
                 };
 
                 tasks.put(taskId, updatedTask);
@@ -138,6 +142,7 @@ actor class TaskManager() {
         };
 
         let updatedBalance = companyProfile.balance - prize;
+
         if (updatedBalance < 0) {
             return #err("Insufficient company balance");
         };
@@ -184,10 +189,11 @@ actor class TaskManager() {
                 if (Array.find(task.workerIds, func (id : Text) : Bool { id == workerId }) != null) {
                     return #err("Task already taken");
                 };
-                
+
+                let updatedWorkerIds = Array.append(task.workerIds, [workerId]);
                 let updatedTask = {
                     task with 
-                    workerId = workerId
+                    workerIds = updatedWorkerIds
                 };
                 tasks.put(taskId, updatedTask);
                 #ok("Task taken")
