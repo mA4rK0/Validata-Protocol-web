@@ -3,6 +3,7 @@ import { Upload, Plus, Download, Clock, CheckCircle, X, AlertCircle, Copy, Eye, 
 import Papa from "papaparse";
 import { Layout } from "../components/Layout";
 import { useAuth } from "../hooks/useAuth";
+import { main_canister } from "../../../src/declarations/main_canister";
 
 export const ClientDashboard: React.FC = () => {
   const { authState } = useAuth();
@@ -67,6 +68,8 @@ export const ClientDashboard: React.FC = () => {
     rewardPerLabel: "",
     qualityThreshold: "High (95%+)",
     labelingInstructions: "",
+    description: "",
+    totalItems: 0,
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -84,7 +87,7 @@ export const ClientDashboard: React.FC = () => {
     }
   };
 
-  const handleCreateTask = (e: React.MouseEvent) => {
+  const handleCreateTask = async (e: React.MouseEvent) => {
     e.preventDefault();
 
     if (!authState.isAuthenticated || !authState.user) {
@@ -115,11 +118,13 @@ export const ClientDashboard: React.FC = () => {
     const taskData = {
       taskName: formData.taskName,
       taskType: formData.taskType,
-      rewardPerLabel: parseFloat(formData.rewardPerLabel) || 0,
+      rewardPerLabel: Math.round(parseFloat(formData.rewardPerLabel) * 1e8) || 0,
       qualityThreshold: formData.qualityThreshold,
       labelingInstructions: formData.labelingInstructions,
+      description: formData.description,
       creatorPrincipal: authState.user.principal,
       creatorRole: authState.user.role,
+      totalItems: formData.totalItems,
       dataset: {
         name: selectedFile.name,
         size: selectedFile.size,
@@ -128,13 +133,15 @@ export const ClientDashboard: React.FC = () => {
     };
 
     // TODO: Call API to create task
-    const sendTaskData = (data: typeof taskData) => {};
-    sendTaskData(taskData);
-
-    console.log("Task created:", taskData);
-    console.log("Dataset:", selectedFile.name);
-    console.log("Creator principal:", authState.user.principal);
-    alert("Task created successfully!");
+    try {
+      const makeATask = await main_canister.makeTask(taskData.taskName, taskData.taskType, taskData.description, taskData.qualityThreshold, taskData.totalItems, taskData.rewardPerLabel, taskData.dataset);
+      console.log("Task created:", taskData, makeATask);
+      console.log("Dataset:", selectedFile.name);
+      console.log("Creator principal:", authState.user.principal);
+      alert("Task created successfully!");
+    } catch (error) {
+      console.error("Error creating task:", error);
+    }
 
     setFormData({
       taskName: "",
@@ -142,6 +149,8 @@ export const ClientDashboard: React.FC = () => {
       rewardPerLabel: "",
       qualityThreshold: "High (95%+)",
       labelingInstructions: "",
+      description: "",
+      totalItems: 0,
     });
 
     resetFileUpload();

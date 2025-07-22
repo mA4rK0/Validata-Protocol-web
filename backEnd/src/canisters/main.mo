@@ -20,7 +20,6 @@ actor class TaskManager() {
         qualityThreshold: Text;
         createdAt: Int; 
         companyId : Text;
-        validatorId : Text;
         workerIds : [Text]; 
         rewardPerLabel : Nat; 
         totalItems : Nat; 
@@ -120,12 +119,9 @@ actor class TaskManager() {
         }
     };
 
-    public shared({caller}) func makeTask(validatorId: Text, name: Text, taskType: Text, description: Text, qualityThreshold: Text, totalItems: Nat, rewardPerLabel: Nat, dataset: [Nat8]) : async Result.Result<Text, Text> {
+    public shared({caller}) func makeTask(name: Text, taskType: Text, description: Text, qualityThreshold: Text, totalItems: Nat, rewardPerLabel: Nat, dataset: [Nat8]) : async Result.Result<Text, Text> {
         let companyId = Principal.toText(caller);
         
-        if (validatorId == "") {
-            return #err("Validator ID required");
-        };
         if (name == "") {
             return #err("Task name required");
         };
@@ -171,7 +167,6 @@ actor class TaskManager() {
             qualityThreshold = qualityThreshold;
             createdAt = Time.now();
             companyId = companyId;
-            validatorId = validatorId;
             workerIds = [];
             rewardPerLabel = rewardPerLabel;
             totalItems = totalItems;
@@ -207,29 +202,6 @@ actor class TaskManager() {
                 };
                 tasks.put(taskId, updatedTask);
                 #ok("Task taken")
-            }
-        }
-    };
-
-    public shared({caller}) func validateTask(taskId : Text) : async Result.Result<Text, Text> {
-        let validatorId = Principal.toText(caller);
-        
-        switch (tasks.get(taskId)) {
-            case null { #err("Task not found") };
-            case (?task) {
-                if (task.validatorId != validatorId) {
-                    return #err("Unauthorized validator");
-                };
-                if (task.workerIds.size() == 0) {
-                    return #err("No worker assigned");
-                };
-                if (task.valid) {
-                    return #err("Already validated");
-                };
-
-                let validatedTask = { task with valid = true };
-                tasks.put(taskId, validatedTask);
-                #ok("Validation successful")
             }
         }
     };
